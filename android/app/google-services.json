@@ -1,0 +1,29 @@
+﻿{
+  "project_info": {
+    "project_number": "770770436971",
+    "project_id": "sumireach-prod",
+    "storage_bucket": "sumireach-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770770436971:android:311a872b072da8c945022e",
+        "android_client_info": {
+          "package_name": "com.sumireach.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDwDZdqF1W22l5ncXcDy6DM5mtl505MEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
