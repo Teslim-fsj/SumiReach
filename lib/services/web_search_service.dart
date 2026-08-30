@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/discovered_candidate.dart';
@@ -155,11 +155,11 @@ Respond with ONLY a valid JSON array matching this schema:
         return results;
       } else {
         // Fallback realistic discovered candidates matching the query
-        return _fallbackDiscovery(naturalLanguageQuery, filters, onProgress, cacheKey);
+        return await _fallbackDiscovery(naturalLanguageQuery, filters, onProgress, cacheKey);
       }
     } catch (e) {
       debugPrint('[GeminiWebSearchService] Error during discovery: $e');
-      return _fallbackDiscovery(naturalLanguageQuery, filters, onProgress, cacheKey);
+      return await _fallbackDiscovery(naturalLanguageQuery, filters, onProgress, cacheKey);
     }
   }
 

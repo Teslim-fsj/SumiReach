@@ -30,9 +30,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _saveApiKey() {
-    setState(() {
-      _isSaved = true;
-    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Gemini API Key configured and verified!'),
