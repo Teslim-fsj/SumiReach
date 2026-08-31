@@ -74,9 +74,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -n "$GEMINI_API_KEY" ]; then
-            flutter build appbundle --release --android-skip-build-dependency-validation --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
+            flutter build appbundle --release --android-skip-build-dependency-validation --build-number=${{ github.run_number }} --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
           else
-            flutter build appbundle --release --android-skip-build-dependency-validation
+            flutter build appbundle --release --android-skip-build-dependency-validation --build-number=${{ github.run_number }}
           fi
 
       - name: Build Android APK
@@ -84,9 +84,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -n "$GEMINI_API_KEY" ]; then
-            flutter build apk --release --android-skip-build-dependency-validation --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
+            flutter build apk --release --android-skip-build-dependency-validation --build-number=${{ github.run_number }} --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
           else
-            flutter build apk --release --android-skip-build-dependency-validation
+            flutter build apk --release --android-skip-build-dependency-validation --build-number=${{ github.run_number }}
           fi
 
       - name: Upload Android App Bundle (AAB) Artifact
