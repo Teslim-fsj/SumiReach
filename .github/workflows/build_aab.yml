@@ -54,6 +54,20 @@ jobs:
             echo "Using committed google-services.json."
           fi
 
+      - name: Inject Android Keystore & Signing Config (if secrets provided)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_PROPERTIES_BASE64: ${{ secrets.KEY_PROPERTIES_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+            echo "Injected upload-keystore.jks from repository secret."
+          fi
+          if [ -n "$KEY_PROPERTIES_BASE64" ]; then
+            echo "$KEY_PROPERTIES_BASE64" | base64 --decode > android/key.properties
+            echo "Injected key.properties from repository secret."
+          fi
+
       - name: Build Android App Bundle (AAB)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
