@@ -141,7 +141,10 @@ class LoginScreen extends StatelessWidget {
                     onPressed: authProvider.isLoading
                         ? null
                         : () async {
-                            await authProvider.signInWithGoogle();
+                            final success = await authProvider.signInWithGoogle();
+                            if (success && context.mounted) {
+                              Navigator.of(context).pushReplacementNamed('/dashboard');
+                            }
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -178,21 +181,6 @@ class LoginScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Demo / Team Guest Access button
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pushReplacementNamed('/dashboard');
-                    },
-                    child: Text(
-                      'Continue with Team Workspace',
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ),
                 ],
               ),

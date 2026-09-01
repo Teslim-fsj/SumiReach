@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:googleapis/gmail/v1.dart' as gmail;
 import 'auth_service.dart';
@@ -90,8 +90,8 @@ class RealGmailService implements GmailService {
       }
 
       if (_gmailApi == null) {
-        debugPrint('[RealGmailService] Gmail API not authenticated. Fallback simulated success.');
-        return true;
+        debugPrint('[RealGmailService] Gmail API not authenticated. User must connect Gmail first.');
+        return false;
       }
 
       // Build RFC 2822 email message
@@ -112,7 +112,7 @@ class RealGmailService implements GmailService {
       return true;
     } catch (e) {
       debugPrint('[RealGmailService] Error sending email via Gmail API: $e');
-      return true; // Graceful completion
+      return false;
     }
   }
 }

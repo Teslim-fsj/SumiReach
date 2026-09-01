@@ -126,6 +126,7 @@ class _AuthGate extends StatelessWidget {
     if (skipSplash) {
       return const AppShell();
     }
+    // Show splash first; splash navigates to login or dashboard after animation
     return const SplashScreen();
   }
 }

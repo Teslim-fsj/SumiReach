@@ -11,6 +11,7 @@ class OutreachProvider extends ChangeNotifier {
   List<OutreachMessage> _messages = [];
   bool _isLoading = false;
   String _searchQuery = '';
+  String? _sendError;
 
   OutreachProvider({
     required OutreachService outreachService,
@@ -24,6 +25,12 @@ class OutreachProvider extends ChangeNotifier {
   List<OutreachMessage> get messages => _messages;
   bool get isLoading => _isLoading;
   String get searchQuery => _searchQuery;
+  String? get sendError => _sendError;
+
+  void clearSendError() {
+    _sendError = null;
+    notifyListeners();
+  }
 
   void setSelectedTab(OutreachStatus status) {
     _selectedTab = status;
@@ -62,22 +69,31 @@ class OutreachProvider extends ChangeNotifier {
 
   Future<bool> sendDraft(OutreachMessage draft) async {
     _isLoading = true;
+    _sendError = null;
     notifyListeners();
 
     try {
-      // Send via Gmail service
-      await _gmailService.sendOutreachEmail(
+      // Send via Gmail API
+      final emailSent = await _gmailService.sendOutreachEmail(
         to: draft.recipientEmail,
         subject: draft.subject,
         body: draft.body,
       );
 
-      // Transition draft to sent status
+      if (!emailSent) {
+        _sendError = 'Gmail not connected. Go to Settings → Integrations to connect your Google account.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Transition draft to sent status in Firestore
       await _outreachService.sendOutreach(draft);
       await fetchMessages();
       return true;
     } catch (e) {
       debugPrint('Error sending outreach: $e');
+      _sendError = 'Failed to send email. Please try again.';
       return false;
     } finally {
       _isLoading = false;

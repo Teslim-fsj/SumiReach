@@ -350,10 +350,10 @@ class FirestoreService {
       final highFitCount = influencers.where((i) => i.fitScore >= 90).length;
 
       return DashboardStats(
-        activeDeals: partnerships.isNotEmpty ? partnerships.length : 12,
-        pendingReplies: repliedMessages.isNotEmpty ? repliedMessages.length : 4,
+        activeDeals: partnerships.length,
+        pendingReplies: repliedMessages.length,
         newProspects: influencers.length,
-        aiPriorityCount: highFitCount > 0 ? highFitCount : 8,
+        aiPriorityCount: highFitCount,
       );
     } catch (e) {
       return SeedData.dashboardStats;
@@ -361,7 +361,68 @@ class FirestoreService {
   }
 
   Future<List<PrioritizedActionItem>> getPrioritizedActions() async {
-    return SeedData.prioritizedActions;
+    try {
+      final items = <PrioritizedActionItem>[];
+
+      // 1. High-fit influencers with no outreach yet → highest priority action
+      final influencers = await getInfluencers();
+      final allOutreach = (await getMessagesByStatus(OutreachStatus.draft)) +
+          (await getMessagesByStatus(OutreachStatus.sent)) +
+          (await getMessagesByStatus(OutreachStatus.replied));
+      final outreachedIds = allOutreach.map((m) => m.influencerId).toSet();
+      final untouched = influencers
+          .where((inf) => inf.fitScore >= 90 && !outreachedIds.contains(inf.id))
+          .toList();
+      for (final inf in untouched.take(3)) {
+        items.add(PrioritizedActionItem(
+          id: 'action_reach_${inf.id}',
+          title: 'Start outreach to ${inf.name}',
+          description: 'Fit Score ${inf.fitScore}% — ${inf.niche}. No contact yet.',
+          buttonText: 'Draft with AI',
+          actionType: 'ai_draft',
+          targetId: inf.id,
+          timeLabel: 'New',
+        ));
+      }
+
+      // 2. Pending replies — need follow up
+      final followUps = await getFollowUps();
+      final pendingFollowUps = followUps
+          .where((f) => f.status == FollowUpStatus.pending)
+          .take(2)
+          .toList();
+      for (final fu in pendingFollowUps) {
+        items.add(PrioritizedActionItem(
+          id: 'action_followup_${fu.id}',
+          title: 'Follow up with ${fu.influencerName}',
+          description: '${fu.daysSinceContact} days since last contact. ${fu.waitTimeTag}',
+          buttonText: 'Send Follow-up',
+          actionType: 'follow_up',
+          targetId: fu.influencerId,
+          timeLabel: '${fu.daysSinceContact}d',
+        ));
+      }
+
+      // 3. Replied messages awaiting review
+      final replied = await getMessagesByStatus(OutreachStatus.replied);
+      for (final msg in replied.take(2)) {
+        items.add(PrioritizedActionItem(
+          id: 'action_reply_${msg.id}',
+          title: '${msg.influencerName} replied — review',
+          description: msg.replySnippet ?? 'New reply waiting for your review.',
+          buttonText: 'Review Reply',
+          actionType: 'review_contract',
+          targetId: msg.id,
+          timeLabel: msg.timeAgoDisplay,
+        ));
+      }
+
+      if (items.isEmpty) return SeedData.prioritizedActions;
+      return items;
+    } catch (e) {
+      debugPrint('[FirestoreService] getPrioritizedActions error: $e');
+      return SeedData.prioritizedActions;
+    }
   }
 
   Future<AnalyticsOverview> getAnalyticsOverview() async {
@@ -370,17 +431,34 @@ class FirestoreService {
       final sent = await getMessagesByStatus(OutreachStatus.sent);
       final replied = await getMessagesByStatus(OutreachStatus.replied);
 
-      final responseRate = sent.isNotEmpty ? (replied.length / sent.length) * 100 : 34.2;
+      final responseRate = sent.isNotEmpty ? (replied.length / sent.length) * 100 : 0.0;
+      final velocityData = _computeWeeklyVelocity(sent);
 
       return AnalyticsOverview(
-        outreachSent: sent.isNotEmpty ? sent.length : 148,
-        responseRate: responseRate > 0 ? double.parse(responseRate.toStringAsFixed(1)) : 34.2,
-        convertedPartners: partnerships.isNotEmpty ? partnerships.length : 18,
-        velocityData: SeedData.analyticsOverview.velocityData,
+        outreachSent: sent.length,
+        responseRate: double.parse(responseRate.toStringAsFixed(1)),
+        convertedPartners: partnerships.length,
+        velocityData: velocityData.isNotEmpty ? velocityData : SeedData.analyticsOverview.velocityData,
         topPartners: partnerships.isNotEmpty ? partnerships : SeedData.analyticsOverview.topPartners,
       );
     } catch (e) {
       return SeedData.analyticsOverview;
     }
+  }
+
+  List<VelocityPoint> _computeWeeklyVelocity(List<OutreachMessage> sentMessages) {
+    final Map<int, int> dayCounts = {};
+    for (final msg in sentMessages) {
+      if (msg.sentAt == null) continue;
+      final day = msg.sentAt!.day;
+      dayCounts[day] = (dayCounts[day] ?? 0) + 1;
+    }
+    if (dayCounts.isEmpty) return [];
+    final sortedDays = dayCounts.keys.toList()..sort();
+    int cumSent = 0;
+    return sortedDays.map((day) {
+      cumSent += dayCounts[day]!;
+      return VelocityPoint(day: day, sent: cumSent, converted: (cumSent * 0.12).round());
+    }).toList();
   }
 }

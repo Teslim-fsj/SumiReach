@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../models/outreach.dart';
 import '../../widgets/creator_avatar.dart';
 import '../../providers/outreach_provider.dart';
+import '../settings/settings_screen.dart';
 
 class OutreachDetailScreen extends StatelessWidget {
   final OutreachMessage message;
@@ -15,8 +16,6 @@ class OutreachDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final outreachProv = context.read<OutreachProvider>();
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -177,18 +176,93 @@ class OutreachDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
             if (message.status == OutreachStatus.draft)
-              ElevatedButton(
-                onPressed: () async {
-                  final sent = await outreachProv.sendDraft(message);
-                  if (sent && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Draft sent via Gmail!')),
-                    );
-                    Navigator.pop(context);
-                  }
+              Consumer<OutreachProvider>(
+                builder: (context, provider, child) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (provider.sendError != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  provider.sendError!,
+                                  style: TextStyle(color: Colors.red.shade800, fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      ElevatedButton(
+                        onPressed: provider.isLoading
+                            ? null
+                            : () async {
+                                final sent = await provider.sendDraft(message);
+                                if (!context.mounted) return;
+                                if (sent) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Draft sent via Gmail!'),
+                                      backgroundColor: AppColors.darkButton,
+                                    ),
+                                  );
+                                  Navigator.pop(context);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(provider.sendError ?? 'Failed to send via Gmail'),
+                                      backgroundColor: Colors.red.shade800,
+                                      action: SnackBarAction(
+                                        label: 'Settings',
+                                        textColor: Colors.white,
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => const SettingsScreen(),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: provider.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Send via Gmail Now',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                              ),
+                      ),
+                    ],
+                  );
                 },
-                style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                child: const Text('Send via Gmail Now'),
               ),
           ],
         ),
@@ -196,3 +270,4 @@ class OutreachDetailScreen extends StatelessWidget {
     );
   }
 }
+

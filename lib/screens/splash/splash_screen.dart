@@ -1,7 +1,10 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/app_logo.dart';
 import '../shell/app_shell.dart';
+import '../auth/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final Duration duration;
@@ -44,9 +47,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     await Future.delayed(widget.duration);
     if (!mounted) return;
     try {
+      // Check if user is already signed in and route accordingly
+      final isAuthenticated = context.read<AuthProvider>().isAuthenticated;
+      final destination = isAuthenticated ? const AppShell() : const LoginScreen();
+
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const AppShell(),
+          pageBuilder: (context, animation, secondaryAnimation) => destination,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
@@ -55,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       );
     } catch (_) {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        Navigator.of(context).pushReplacementNamed('/login');
       }
     }
   }
@@ -71,8 +78,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     return GestureDetector(
       onTap: () {
         if (mounted) {
+          final isAuthenticated = context.read<AuthProvider>().isAuthenticated;
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const AppShell()),
+            MaterialPageRoute(
+              builder: (_) => isAuthenticated ? const AppShell() : const LoginScreen(),
+            ),
           );
         }
       },

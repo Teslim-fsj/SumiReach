@@ -306,6 +306,14 @@ class _InfluencerDetailScreenState extends State<InfluencerDetailScreen> {
         ),
       );
       nav.pop();
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(outreachProv.sendError ?? 'Failed to send pitch via Gmail.'),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
     }
   }
 }
+

@@ -22,8 +22,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1000));
     await tester.pumpAndSettle();
 
-    // Verify transition to main AppShell
-    expect(find.text('Good morning.'), findsOneWidget);
-    expect(find.text('Active Deals'), findsOneWidget);
+    // Verify transition to LoginScreen when unauthenticated
+    expect(find.text('Sign in with Google'), findsOneWidget);
   });
 }
