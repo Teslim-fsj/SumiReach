@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_colors.dart';
-import '../../models/influencer.dart';
 import '../../providers/influencer_provider.dart';
 import '../../widgets/filter_chip_row.dart';
 import '../../widgets/influencer_tile.dart';
