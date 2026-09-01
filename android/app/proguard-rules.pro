@@ -1,10 +1,17 @@
-﻿# Flutter
+﻿# Flutter & Flutter Engine
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.** { *; }
 -keep class io.flutter.util.** { *; }
 -keep class io.flutter.view.** { *; }
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
+-dontwarn io.flutter.embedding.**
+
+# Google Play Core (Split Install / Deferred Components)
+-dontwarn com.google.android.play.core.**
+-dontwarn com.google.android.play.core.splitcompat.**
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.**
 
 # Google Play Services & Firebase
 -keepattributes *Annotation*
@@ -26,7 +33,8 @@
 -keep class com.google.android.gms.auth.api.credentials.** { *; }
 -keep class com.google.android.gms.common.api.** { *; }
 
-# OkHttp & Coroutines
+# OkHttp, Coroutines & AndroidX
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn kotlinx.coroutines.**
+-dontwarn androidx.**
