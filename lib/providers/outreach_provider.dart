@@ -17,7 +17,7 @@ class OutreachProvider extends ChangeNotifier {
     required GmailService gmailService,
   })  : _outreachService = outreachService,
         _gmailService = gmailService {
-    fetchMessages();
+    Future.microtask(() => fetchMessages());
   }
 
   OutreachStatus get selectedTab => _selectedTab;

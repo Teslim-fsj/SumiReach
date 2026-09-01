@@ -31,6 +31,8 @@ class AppLogo extends StatelessWidget {
         'assets/images/sumireach_logo.png',
         width: size,
         height: size,
+        cacheWidth: (size * 3).toInt().clamp(64, 512),
+        cacheHeight: (size * 3).toInt().clamp(64, 512),
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
           return Container(

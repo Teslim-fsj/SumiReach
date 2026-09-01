@@ -13,7 +13,7 @@ class AnalyticsProvider extends ChangeNotifier {
 
   AnalyticsProvider({required AnalyticsService analyticsService})
       : _analyticsService = analyticsService {
-    fetchDashboardData();
+    Future.microtask(() => fetchDashboardData());
   }
 
   DashboardStats? get dashboardStats => _dashboardStats;

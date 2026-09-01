@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../models/followup.dart';
 import '../services/gmail_service.dart';
 import '../services/firestore_service.dart';
@@ -14,7 +14,7 @@ class FollowUpProvider extends ChangeNotifier {
     required FirestoreService firestoreService,
   })  : _gmailService = gmailService,
         _firestoreService = firestoreService {
-    fetchFollowUps();
+    Future.microtask(() => fetchFollowUps());
   }
 
   List<FollowUpItem> get items =>

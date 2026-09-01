@@ -25,7 +25,7 @@ class InfluencerProvider extends ChangeNotifier {
     required AiService aiService,
   })  : _influencerService = influencerService,
         _aiService = aiService {
-    fetchInfluencers();
+    Future.microtask(() => fetchInfluencers());
   }
 
   List<Influencer> get influencers => _influencers;

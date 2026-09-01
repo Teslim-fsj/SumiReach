@@ -1,16 +1,38 @@
+﻿import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'services/firestore_service.dart';
 import 'app.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Run app immediately so splash and UI display instantly
-  runApp(const SumiReachApp());
+    // Prevent uncaught Flutter framework errors from crashing the app
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      debugPrint('[FlutterError] ${details.exceptionAsString()}');
+    };
 
-  // Non-blocking Firebase and Firestore initialization in background
+    // Prevent uncaught asynchronous platform errors from exiting
+    PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      debugPrint('[PlatformDispatcher Error] $error\n$stack');
+      return true; // Return true to mark the error as handled
+    };
+
+    // Run the app UI immediately
+    runApp(const SumiReachApp());
+
+    // Non-blocking Firebase and Firestore initialization in the background
+    _initializeFirebaseInBackground();
+  }, (error, stack) {
+    debugPrint('[Root Zone Error] $error\n$stack');
+  });
+}
+
+Future<void> _initializeFirebaseInBackground() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -19,6 +41,6 @@ void main() async {
     final firestoreService = FirestoreService();
     firestoreService.seedIfEmpty().ignore();
   } catch (e) {
-    debugPrint('Firebase initialization notice: $e');
+    debugPrint('[Firebase Init Notice] Firebase running in offline/local fallback mode: $e');
   }
 }
