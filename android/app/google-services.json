@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "770770436971-905rb72p10vir2cbn782pln2j8acpka7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sumireach.app",
+            "certificate_hash": "9952300769a2c1061a9e26af81c417bae08ebe52"
+          }
+        },
+        {
           "client_id": "770770436971-i79rqbjpc7ok901u3fcnbtn103v859bv.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
