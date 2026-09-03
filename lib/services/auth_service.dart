@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
@@ -14,6 +14,9 @@ class AuthService {
   })  : _firebaseAuth = firebaseAuth,
         _googleSignIn = googleSignIn ??
             GoogleSignIn(
+              // Web client ID from google-services.json (client_type: 3)
+              // Required for Firebase Auth to receive a valid ID token on Android
+              serverClientId: '770770436971-f410eig19uk4a1rievb28d9gut7gp6n7.apps.googleusercontent.com',
               scopes: [
                 'email',
                 'https://www.googleapis.com/auth/gmail.send',
