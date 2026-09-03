@@ -12,7 +12,20 @@
           "package_name": "com.sumireach.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "770770436971-i79rqbjpc7ok901u3fcnbtn103v859bv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sumireach.app",
+            "certificate_hash": "b1cfd12d1a3e377bf0fa561d2eb391db6351f360"
+          }
+        },
+        {
+          "client_id": "770770436971-f410eig19uk4a1rievb28d9gut7gp6n7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBDwDZdqF1W22l5ncXcDy6DM5mtl505MEw"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "770770436971-f410eig19uk4a1rievb28d9gut7gp6n7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
