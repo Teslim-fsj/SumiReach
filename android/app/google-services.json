@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "770770436971-urmqhmuhq1mu5hnh7eal1s3e97cbdqei.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sumireach.app",
+            "certificate_hash": "80a395134e38832d400e99790d3d0a100ebb00a5"
+          }
+        },
+        {
           "client_id": "770770436971-f410eig19uk4a1rievb28d9gut7gp6n7.apps.googleusercontent.com",
           "client_type": 3
         }
