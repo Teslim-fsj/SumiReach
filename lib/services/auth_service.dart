@@ -19,9 +19,6 @@ class AuthService {
               serverClientId: '770770436971-f410eig19uk4a1rievb28d9gut7gp6n7.apps.googleusercontent.com',
               scopes: [
                 'email',
-                'https://www.googleapis.com/auth/gmail.send',
-                'https://www.googleapis.com/auth/gmail.readonly',
-                'https://www.googleapis.com/auth/spreadsheets',
               ],
             );
 
@@ -70,6 +67,19 @@ class AuthService {
 
   Future<auth.AuthClient?> getAuthenticatedHttpClient() async {
     try {
+      const additionalScopes = [
+        'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/spreadsheets',
+      ];
+      final canAccess = await _googleSignIn.canAccessScopes(additionalScopes);
+      if (!canAccess) {
+        final granted = await _googleSignIn.requestScopes(additionalScopes);
+        if (!granted) {
+          debugPrint('[AuthService] Additional scopes not granted by user');
+          return null;
+        }
+      }
       final client = await _googleSignIn.authenticatedClient();
       return client;
     } catch (e) {
