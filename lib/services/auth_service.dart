@@ -14,12 +14,11 @@ class AuthService {
   })  : _firebaseAuth = firebaseAuth,
         _googleSignIn = googleSignIn ??
             GoogleSignIn(
-              // Web client ID from google-services.json (client_type: 3)
-              // Required for Firebase Auth to receive a valid ID token on Android
-              serverClientId: '770770436971-f410eig19uk4a1rievb28d9gut7gp6n7.apps.googleusercontent.com',
-              scopes: [
-                'email',
-              ],
+              // serverClientId is intentionally omitted — the google-services Gradle
+              // plugin auto-generates default_web_client_id from google-services.json
+              // which google_sign_in_android reads automatically at runtime.
+              // Hardcoding it can cause ApiException:10 if the value mismatches.
+              scopes: const ['email'],
             );
 
   FirebaseAuth? get _auth {
