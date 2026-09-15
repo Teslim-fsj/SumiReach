@@ -1,25 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' as auth;
+import 'package:http/http.dart' as http;
+
+/// Scopes required for Gmail and Sheets API access.
+const _gmailSheetScopes = [
+  'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/spreadsheets',
+];
 
 class AuthService {
   FirebaseAuth? _firebaseAuth;
-  final GoogleSignIn _googleSignIn;
 
-  AuthService({
-    FirebaseAuth? firebaseAuth,
-    GoogleSignIn? googleSignIn,
-  })  : _firebaseAuth = firebaseAuth,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              // serverClientId is intentionally omitted — the google-services Gradle
-              // plugin auto-generates default_web_client_id from google-services.json
-              // which google_sign_in_android reads automatically at runtime.
-              // Hardcoding it can cause ApiException:10 if the value mismatches.
-              scopes: const ['email'],
-            );
+  /// Cached Google OAuth access token obtained during sign-in.
+  /// Used to create authenticated HTTP clients for Gmail / Sheets.
+  String? _cachedAccessToken;
+
+  AuthService({FirebaseAuth? firebaseAuth}) : _firebaseAuth = firebaseAuth;
 
   FirebaseAuth? get _auth {
     if (_firebaseAuth != null) return _firebaseAuth;
@@ -27,7 +25,7 @@ class AuthService {
       _firebaseAuth = FirebaseAuth.instance;
       return _firebaseAuth;
     } catch (e) {
-      debugPrint('[AuthService] Firebase not initialized in current runner: $e');
+      debugPrint('[AuthService] Firebase not initialized: $e');
       return null;
     }
   }
@@ -37,60 +35,84 @@ class AuthService {
       _auth?.authStateChanges() ?? const Stream.empty();
   bool get isAuthenticated => currentUser != null;
 
-  GoogleSignInAccount? get currentGoogleUser => _googleSignIn.currentUser;
-
+  /// Signs in with Google using [FirebaseAuth.signInWithProvider].
+  ///
+  /// This opens a Chrome Custom Tab (browser-based OAuth) instead of the
+  /// native Google Play Services account picker, which avoids
+  /// [ApiException: 10 DEVELOPER_ERROR] caused by signing-certificate
+  /// mismatches in the GMS SDK.
+  ///
+  /// All required Google API scopes (Gmail + Sheets) are requested upfront
+  /// so [getAuthenticatedHttpClient] can work immediately after sign-in.
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return null;
-      }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
       final authInstance = _auth;
-      if (authInstance != null) {
-        final userCredential = await authInstance.signInWithCredential(credential);
-        return userCredential;
-      }
-      return null;
+      if (authInstance == null) return null;
+
+      final googleProvider = GoogleAuthProvider()
+        ..addScope('email')
+        ..addScope('profile')
+        ..addScope('https://www.googleapis.com/auth/gmail.send')
+        ..addScope('https://www.googleapis.com/auth/gmail.readonly')
+        ..addScope('https://www.googleapis.com/auth/spreadsheets');
+
+      final userCredential =
+          await authInstance.signInWithProvider(googleProvider);
+
+      // Cache the Google OAuth access token for downstream API calls.
+      final oauthCred = userCredential.credential as OAuthCredential?;
+      _cachedAccessToken = oauthCred?.accessToken;
+
+      debugPrint(
+          '[AuthService] Signed in as: ${userCredential.user?.email}');
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      debugPrint(
+          '[AuthService] FirebaseAuthException: ${e.code} — ${e.message}');
+      rethrow;
     } catch (e) {
-      debugPrint('[AuthService] Error during Google Sign-In: $e');
+      debugPrint('[AuthService] Sign-in error: $e');
       rethrow;
     }
   }
 
+  /// Returns an authenticated HTTP client scoped for Gmail and Sheets APIs.
+  ///
+  /// Requires that [signInWithGoogle] has been called first in this session.
+  /// If the access token has expired (> 1 h since sign-in), the user will
+  /// need to sign in again.
   Future<auth.AuthClient?> getAuthenticatedHttpClient() async {
     try {
-      const additionalScopes = [
-        'https://www.googleapis.com/auth/gmail.send',
-        'https://www.googleapis.com/auth/gmail.readonly',
-        'https://www.googleapis.com/auth/spreadsheets',
-      ];
-      final canAccess = await _googleSignIn.canAccessScopes(additionalScopes);
-      if (!canAccess) {
-        final granted = await _googleSignIn.requestScopes(additionalScopes);
-        if (!granted) {
-          debugPrint('[AuthService] Additional scopes not granted by user');
-          return null;
-        }
+      final token = _cachedAccessToken;
+      if (token == null) {
+        debugPrint(
+            '[AuthService] No cached access token — sign in first.');
+        return null;
       }
-      final client = await _googleSignIn.authenticatedClient();
-      return client;
+
+      final credentials = auth.AccessCredentials(
+        auth.AccessToken(
+          'Bearer',
+          token,
+          // Access tokens last ~1 h; we use a conservative estimate.
+          DateTime.now().toUtc().add(const Duration(minutes: 55)),
+        ),
+        null, // No refresh token — user re-authenticates when token expires.
+        _gmailSheetScopes,
+      );
+
+      return auth.authenticatedClient(http.Client(), credentials);
     } catch (e) {
-      debugPrint('[AuthService] Error getting authenticated client: $e');
+      debugPrint('[AuthService] Error creating authenticated client: $e');
       return null;
     }
   }
 
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
+      _cachedAccessToken = null;
       await _auth?.signOut();
+      debugPrint('[AuthService] Signed out.');
     } catch (e) {
       debugPrint('[AuthService] Error during signOut: $e');
     }
